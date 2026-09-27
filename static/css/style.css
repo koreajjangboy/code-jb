@@ -1,0 +1,96 @@
+/*
+ * 디자인 기준: docs/design-system.md
+ * Bootstrap 5 기본값 위에서 디자인 시스템과 다른 부분만 보완한다.
+ */
+
+:root {
+    --bs-body-font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --bs-body-font-size: 14px;
+    --bs-body-line-height: 20px;
+    --bs-body-color: #6B7280;
+    --bs-body-bg: #FFFFFF;
+    --bs-emphasis-color: #374151;
+    --bs-border-color: #E5E7EB;
+    --bs-link-color: #3B82F6;
+    --bs-link-color-rgb: 59, 130, 246;
+    --bs-link-hover-color: #3B82F6;
+    --bs-link-hover-color-rgb: 59, 130, 246;
+}
+
+/* Layout: 최대 너비 1200px, 좌우 24px (640px 이하 16px) */
+.container {
+    max-width: 1200px;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+@media (max-width: 640px) {
+    .container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .card-body {
+        padding: 16px;
+    }
+}
+
+/* Header */
+.site-header {
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.site-header .navbar-brand {
+    color: #374151;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 28px;
+}
+
+.site-header .nav-link {
+    color: #6B7280;
+    font-weight: 500;
+}
+
+.site-header .nav-link:hover,
+.site-header .nav-link.active {
+    color: #3B82F6;
+}
+
+/* Main: 하단 여백 48px */
+.site-main {
+    padding-top: 48px;
+    padding-bottom: 48px;
+}
+
+/* Typography */
+.text-metric {
+    color: #374151;
+    font-size: 30px;
+    font-weight: 600;
+    line-height: normal;
+}
+
+.text-title {
+    color: #374151;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 28px;
+}
+
+/* Card */
+.card {
+    --bs-card-border-color: #E5E7EB;
+    --bs-card-border-radius: 8px;
+    --bs-card-spacer-x: 24px;
+    --bs-card-spacer-y: 24px;
+    --bs-card-title-spacer-y: 16px;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Footer: Divider 색 구분선 + Label 스타일 */
+.site-footer {
+    border-top: 1px solid #F3F4F6;
+    font-size: 12px;
+    line-height: normal;
+}
