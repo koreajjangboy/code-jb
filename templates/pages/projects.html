@@ -6,39 +6,31 @@
     <h1 class="text-metric mb-4">Projects</h1>
 
     <div class="row g-3">
+        {% for project in projects %}
         <article class="col-12 col-md-6">
             <div class="card h-100">
                 <div class="card-body">
                     <h2 class="card-title text-title">
-                        <a href="https://www.code-jb.dev" target="_blank" rel="noopener noreferrer">code-jb.dev</a>
+                        {% if project.project_url %}
+                        <a href="{{ project.project_url }}" target="_blank" rel="noopener noreferrer">{{ project.name }}</a>
+                        {% else %}
+                        {{ project.name }}
+                        {% endif %}
                     </h2>
                     <p class="card-text">
-                        code-jb.dev is my personal website, built with Django
-                        as a space for development, projects, and creative expression.
+                        {{ project.description }}
                     </p>
-                    <p class="card-text">Python · Django · Bootstrap</p>
+                    {% if project.technology_list %}
+                    <p class="card-text">{{ project.technology_list|join:" · " }}</p>
+                    {% endif %}
+                    {% if project.github_url %}
                     <p class="card-text">
-                        <a href="https://github.com/koreajjangboy/code-jb" target="_blank" rel="noopener noreferrer">View on GitHub <span aria-hidden="true">→</span></a>
+                        <a href="{{ project.github_url }}" target="_blank" rel="noopener noreferrer">View on GitHub <span aria-hidden="true">→</span></a>
                     </p>
+                    {% endif %}
                 </div>
             </div>
         </article>
-
-        <article class="col-12 col-md-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h2 class="card-title text-title">
-                        <a href="https://sns.code-jb.dev" target="_blank" rel="noopener noreferrer">SNS-Assistant</a>
-                    </h2>
-                    <p class="card-text">
-                        SNS-Assistant generates SNS posts and hashtags from images and keywords using the Gemini API.
-                    </p>
-                    <p class="card-text">Python · Streamlit · Gemini API · Pillow</p>
-                    <p class="card-text">
-                        <a href="https://github.com/koreajjangboy/SNS-Assistant" target="_blank" rel="noopener noreferrer">View on GitHub <span aria-hidden="true">→</span></a>
-                    </p>
-                </div>
-            </div>
-        </article>
+        {% endfor %}
     </div>
 {% endblock %}

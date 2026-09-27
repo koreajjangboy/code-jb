@@ -1,5 +1,7 @@
 from django.shortcuts import render
 
+from .models import Project
+
 
 def home(request):
     return render(request, "pages/home.html")
@@ -10,4 +12,9 @@ def about(request):
 
 
 def projects(request):
-    return render(request, "pages/projects.html")
+    projects = Project.objects.filter(is_published=True)
+    return render(
+        request,
+        "pages/projects.html",
+        {"projects": projects},
+    )
