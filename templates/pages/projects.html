@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Projects | JB Kim{% endblock %}
+
+{% block content %}
+    <h1 class="text-metric mb-4">Projects</h1>
+
+    <div class="row g-3">
+        <article class="col-12 col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="card-title text-title">
+                        <a href="https://www.code-jb.dev" target="_blank" rel="noopener noreferrer">code-jb.dev</a>
+                    </h2>
+                    <p class="card-text">
+                        code-jb.dev is my personal website, built with Django
+                        as a space for development, projects, and creative expression.
+                    </p>
+                    <p class="card-text">Python · Django · Bootstrap</p>
+                    <p class="card-text">
+                        <a href="https://github.com/koreajjangboy/code-jb" target="_blank" rel="noopener noreferrer">View on GitHub <span aria-hidden="true">→</span></a>
+                    </p>
+                </div>
+            </div>
+        </article>
+
+        <article class="col-12 col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="card-title text-title">
+                        <a href="https://sns.code-jb.dev" target="_blank" rel="noopener noreferrer">SNS-Assistant</a>
+                    </h2>
+                    <p class="card-text">
+                        SNS-Assistant generates SNS posts and hashtags from images and keywords using the Gemini API.
+                    </p>
+                    <p class="card-text">Python · Streamlit · Gemini API · Pillow</p>
+                    <p class="card-text">
+                        <a href="https://github.com/koreajjangboy/SNS-Assistant" target="_blank" rel="noopener noreferrer">View on GitHub <span aria-hidden="true">→</span></a>
+                    </p>
+                </div>
+            </div>
+        </article>
+    </div>
+{% endblock %}

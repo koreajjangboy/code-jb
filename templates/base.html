@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,6 +23,7 @@
                     {% with url_name=request.resolver_match.url_name %}
                     <a class="nav-link{% if url_name == 'home' %} active{% endif %}" href="{% url 'home' %}"{% if url_name == 'home' %} aria-current="page"{% endif %}>Home</a>
                     <a class="nav-link{% if url_name == 'about' %} active{% endif %}" href="{% url 'about' %}"{% if url_name == 'about' %} aria-current="page"{% endif %}>About</a>
+                    <a class="nav-link{% if url_name == 'projects' %} active{% endif %}" href="{% url 'projects' %}"{% if url_name == 'projects' %} aria-current="page"{% endif %}>Projects</a>
                     {% endwith %}
                 </div>
             </div>
