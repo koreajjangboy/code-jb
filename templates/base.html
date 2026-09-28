@@ -24,6 +24,7 @@
                     <a class="nav-link{% if url_name == 'home' %} active{% endif %}" href="{% url 'home' %}"{% if url_name == 'home' %} aria-current="page"{% endif %}>Home</a>
                     <a class="nav-link{% if url_name == 'about' %} active{% endif %}" href="{% url 'about' %}"{% if url_name == 'about' %} aria-current="page"{% endif %}>About</a>
                     <a class="nav-link{% if url_name == 'projects' %} active{% endif %}" href="{% url 'projects' %}"{% if url_name == 'projects' %} aria-current="page"{% endif %}>Projects</a>
+                    <a class="nav-link{% if url_name == 'guestbook' or url_name == 'guestbook_reply' %} active{% endif %}" href="{% url 'guestbook' %}"{% if url_name == 'guestbook' or url_name == 'guestbook_reply' %} aria-current="page"{% endif %}>Guestbook</a>
                     {% endwith %}
                 </div>
             </div>

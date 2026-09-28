@@ -1,0 +1,13 @@
+{% if reply_to and reply_to.pk == entry.pk %}
+<form class="guestbook-reply-form" id="reply-form" method="post" action="{% url 'guestbook_reply' entry.pk %}" aria-labelledby="reply-form-heading">
+    <h3 id="reply-form-heading" class="guestbook-reply-form-heading">Reply to {{ entry.name }}</h3>
+    {% csrf_token %}
+    {% include "pages/_guestbook_fields.html" with form=reply_form %}
+    <div class="guestbook-reply-form-actions">
+        <button type="submit" class="button-primary">Post reply</button>
+        <a class="button-secondary" href="{% url 'guestbook' %}#entry-{{ entry.pk }}">Cancel</a>
+    </div>
+</form>
+{% else %}
+<a class="guestbook-reply-link" href="{% url 'guestbook_reply' entry.pk %}#reply-form" aria-label="Reply to {{ entry.name }}">Reply</a>
+{% endif %}

@@ -10,13 +10,7 @@
         <article class="col-12 col-md-6">
             <div class="card h-100">
                 <div class="card-body">
-                    <h2 class="card-title text-title">
-                        {% if project.project_url %}
-                        <a href="{{ project.project_url }}" target="_blank" rel="noopener noreferrer">{{ project.name }}</a>
-                        {% else %}
-                        {{ project.name }}
-                        {% endif %}
-                    </h2>
+                    <h2 class="card-title text-title">{{ project.name }}</h2>
                     <p class="card-text">
                         {{ project.description }}
                     </p>

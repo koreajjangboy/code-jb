@@ -23,3 +23,25 @@ class Project(models.Model):
     @property
     def technology_list(self):
         return [name.strip() for name in self.technologies.split(",") if name.strip()]
+
+
+class GuestbookEntry(models.Model):
+    name = models.CharField(max_length=50)
+    message = models.TextField(max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # NULL for a top-level entry; otherwise the entry (or reply) this is a reply to.
+    # Deleting an entry also deletes the replies below it.
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="replies",
+    )
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        verbose_name_plural = "guestbook entries"
+
+    def __str__(self):
+        return self.name

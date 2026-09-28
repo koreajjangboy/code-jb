@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Guestbook | JB Kim{% endblock %}
+
+{% block content %}
+    <h1 class="text-metric guestbook-title">Guestbook</h1>
+
+    <div class="guestbook">
+        <section class="guestbook-card" aria-labelledby="guestbook-form-heading">
+            <h2 id="guestbook-form-heading" class="text-title guestbook-heading">Leave a message</h2>
+            <form class="guestbook-form" method="post" action="{% url 'guestbook' %}">
+                {% csrf_token %}
+                {% include "pages/_guestbook_fields.html" %}
+                <button type="submit" class="button-primary">Sign guestbook</button>
+            </form>
+        </section>
+
+        <section aria-labelledby="guestbook-entries-heading">
+            <h2 id="guestbook-entries-heading" class="text-title guestbook-heading">Messages</h2>
+            {% if threads %}
+            <ol class="guestbook-entries">
+                {% for entry, replies in threads %}
+                <li class="guestbook-card guestbook-entry" id="entry-{{ entry.pk }}">
+                    <p class="text-title guestbook-entry-name">{{ entry.name }}</p>
+                    <time class="guestbook-entry-date" datetime="{{ entry.created_at|date:'c' }}">{{ entry.created_at|date:"M j, Y H:i" }} UTC</time>
+                    <p class="guestbook-entry-message">{{ entry.message }}</p>
+                    {% include "pages/_guestbook_reply.html" %}
+                    {% if replies %}
+                    <ol class="guestbook-replies" aria-label="Replies to {{ entry.name }}">
+                        {% for reply in replies %}
+                        <li class="guestbook-reply guestbook-reply-indent-{{ reply.indent }}" id="entry-{{ reply.pk }}">
+                            <p class="guestbook-reply-name">{{ reply.name }}</p>
+                            {% if reply.depth > reply.indent %}
+                            <p class="guestbook-reply-to">Replying to {{ reply.parent.name }}</p>
+                            {% endif %}
+                            <time class="guestbook-reply-date" datetime="{{ reply.created_at|date:'c' }}">{{ reply.created_at|date:"M j, Y H:i" }} UTC</time>
+                            <p class="guestbook-entry-message">{{ reply.message }}</p>
+                            {% include "pages/_guestbook_reply.html" with entry=reply %}
+                        </li>
+                        {% endfor %}
+                    </ol>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+            {% else %}
+            <p class="guestbook-empty">No messages yet. Be the first to sign the guestbook.</p>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}
