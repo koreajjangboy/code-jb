@@ -1,11 +1,26 @@
+import json
+import urllib.error
+import urllib.parse
+from unittest import mock
+
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from . import creative_works
 from .models import GuestbookEntry, Project
 
+# Tests never talk to Spotify: credentials are blank unless a test sets them,
+# and API calls are replaced with mock.patch.
+NO_API_KEYS = override_settings(SPOTIFY_CLIENT_ID="", SPOTIFY_CLIENT_SECRET="")
 
+
+@NO_API_KEYS
 class PageViewTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
     def test_pages_render_with_expected_template(self):
         pages = [
             ("home", "/", "pages/home.html"),
@@ -68,6 +83,41 @@ class PageViewTests(TestCase):
             with self.subTest(text=text):
                 self.assertContains(response, text)
         self.assertContains(response, "Code is how I build. Art is how I express.", count=1)
+
+    def test_home_intro_and_current_focus_copy(self):
+        content = self.client.get("/").content.decode()
+        intro = content[content.index("</h1>"):content.index('id="about"')]
+        self.assertIn("Where technology meets art, I build practical projects that give ideas a real shape.", intro)
+        self.assertNotIn("Step by step", intro)
+        focus = content[content.index(">Current Focus</h3>"):content.index('id="creative-works-heading"')]
+        for text in [
+            '<p class="focus-title">Education for the AI Generation</p>',
+            '<p class="focus-text">Helping the next generation grow with confidence in the age of AI.</p>',
+            '<p class="focus-title">Emotional Steadiness</p>',
+            '<p class="focus-text">Balancing everyday life and creative work to stay immersed for the long run.</p>',
+        ]:
+            with self.subTest(text=text):
+                self.assertIn(text, focus)
+        self.assertNotIn("focus-caption", focus)
+
+    def test_tech_keywords_only_remain_in_skills(self):
+        content = self.client.get("/").content.decode()
+        jb_card = content[content.index(">JB Kim</h3>"):content.index(">Skills</h3>")]
+        skills = content[content.index(">Skills</h3>"):content.index(">Current Focus</h3>")]
+        intro = content[content.index("</h1>"):content.index('id="about"')]
+        focus = content[content.index(">Current Focus</h3>"):content.index('id="creative-works-heading"')]
+        for name, section in [("intro", intro), ("JB Kim card", jb_card), ("Current Focus", focus)]:
+            for keyword in ["Python", "Django", "PostgreSQL", "data analysis", "AI"]:
+                # "AI" is part of the approved Current Focus topic (Education for the AI Generation).
+                if name == "Current Focus" and keyword == "AI":
+                    continue
+                with self.subTest(section=name, keyword=keyword):
+                    self.assertNotIn(keyword, section)
+        for item in ["Python", "Django", "PostgreSQL", "Git / GitHub", "Docker", "Data Analysis", "AI / Automation"]:
+            with self.subTest(skill=item):
+                self.assertIn(f"<li>{item}</li>", skills)
+        self.assertIn("I turn ideas into projects.", jb_card)
+        self.assertNotIn("I connect technology and creativity through practical projects.", jb_card)
 
     def test_about_url_redirects_to_home_section(self):
         self.assertEqual(reverse("about"), "/about/")
@@ -476,3 +526,255 @@ class GuestbookReplyTests(TestCase):
         self.assertContains(response, "column-parent")
         replies_only = self.client.get("/admin/pages/guestbookentry/?parent__isempty=0")
         self.assertEqual([e.name for e in replies_only.context["cl"].result_list], ["JB Kim"])
+
+
+SPOTIFY_KEYS = {"SPOTIFY_CLIENT_ID": "test-id", "SPOTIFY_CLIENT_SECRET": "test-secret"}
+KYOBO_AUTHOR_URL = "https://store.kyobobook.co.kr/person/detail/1122019501"
+
+
+def fake_response(payload):
+    body = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
+    response = mock.MagicMock()
+    response.read.return_value = body
+    response.__enter__.return_value = response
+    return response
+
+
+def album(name, date, album_type="album", url=None, images=None):
+    slug = name.replace(" ", "")
+    return {
+        "name": name,
+        "release_date": date,
+        "album_type": album_type,
+        "external_urls": {"spotify": url or f"https://open.spotify.com/album/{slug}"},
+        "images": images if images is not None else [
+            {"url": f"https://i.scdn.co/image/{slug}-640", "width": 640},
+            {"url": f"https://i.scdn.co/image/{slug}-300", "width": 300},
+            {"url": f"https://i.scdn.co/image/{slug}-64", "width": 64},
+        ],
+    }
+
+
+def api(spotify_albums=None):
+    """urlopen replacement for the Spotify API; any other URL fails the test."""
+    def urlopen(request, timeout=None):
+        url = request.full_url
+        if url.startswith(creative_works.SPOTIFY_TOKEN_URL):
+            return fake_response({"access_token": "token-123", "expires_in": 3600})
+        if url.startswith("https://api.spotify.com/"):
+            assert request.headers["Authorization"] == "Bearer token-123"
+            return fake_response({"items": spotify_albums or []})
+        raise AssertionError(f"unexpected URL {url}")
+    return mock.patch("pages.creative_works.urllib.request.urlopen", side_effect=urlopen)
+
+
+@NO_API_KEYS
+class CreativeWorksTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    # Fallbacks (Spotify)
+
+    def test_missing_credentials_use_fallback_without_network(self):
+        with mock.patch("pages.creative_works.urllib.request.urlopen") as urlopen:
+            works = creative_works.creative_works()
+        urlopen.assert_not_called()
+        self.assertTrue(works["albums"]["is_fallback"])
+        self.assertEqual(
+            [i["title"] for i in works["albums"]["items"]],
+            ["On The Start Line", "Enjoy Your Memory", "Daehan's Daughters"],
+        )
+        self.assertEqual(works["spotify_artist_url"], "https://open.spotify.com/artist/5boerVEEWWSxs8H4B8iSm3")
+        self.assertEqual(works["kyobo_author_url"], KYOBO_AUTHOR_URL)
+
+    def test_spotify_fallback_items_use_safe_links_and_covers(self):
+        items = creative_works.spotify_fallback()
+        self.assertEqual(len(items), 3)
+        for item in items:
+            self.assertEqual(item["url"], creative_works.safe_url(item["url"], creative_works.SPOTIFY_LINK_HOSTS))
+            self.assertEqual(item["image"], creative_works.safe_url(item["image"], creative_works.SPOTIFY_IMAGE_HOSTS))
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_network_error_falls_back_and_is_not_retried_immediately(self):
+        with mock.patch("pages.creative_works.urllib.request.urlopen", side_effect=urllib.error.URLError("down")) as urlopen:
+            first = creative_works.latest_albums()
+            second = creative_works.latest_albums()
+        self.assertTrue(first["is_fallback"])
+        self.assertEqual(first, second)
+        self.assertEqual(urlopen.call_count, 1)
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_timeout_falls_back(self):
+        with mock.patch("pages.creative_works.urllib.request.urlopen", side_effect=TimeoutError()):
+            self.assertTrue(creative_works.latest_albums()["is_fallback"])
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_invalid_json_falls_back(self):
+        with mock.patch("pages.creative_works.urllib.request.urlopen", return_value=fake_response(b"<html>oops")):
+            self.assertTrue(creative_works.latest_albums()["is_fallback"])
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_unexpected_response_shape_falls_back(self):
+        with mock.patch("pages.creative_works.urllib.request.urlopen", return_value=fake_response(["not", "a", "dict"])):
+            self.assertTrue(creative_works.latest_albums()["is_fallback"])
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_last_good_result_is_used_during_an_outage(self):
+        with api(spotify_albums=[album("First Album", "2025-03-01")]):
+            good = creative_works.latest_albums()
+        cache.delete("creative_works:spotify:albums")  # the 24 h entry expired
+        with mock.patch("pages.creative_works.urllib.request.urlopen", side_effect=urllib.error.URLError("down")):
+            during_outage = creative_works.latest_albums()
+        self.assertFalse(good["is_fallback"])
+        self.assertEqual(during_outage, good)
+
+    # Spotify
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_spotify_returns_three_newest_releases(self):
+        albums = [
+            album("Old Album", "2023"),
+            album("Newest Single", "2026-09-01", album_type="single"),
+            album("Oldest Album", "2019-01-01"),
+            album("Middle Album", "2025-05"),
+        ]
+        with api(spotify_albums=albums) as urlopen:
+            result = creative_works.latest_albums()
+        self.assertIn("limit=10", urlopen.call_args.args[0].full_url)
+        self.assertFalse(result["is_fallback"])
+        self.assertEqual([i["title"] for i in result["items"]], ["Newest Single", "Middle Album", "Old Album"])
+        newest = result["items"][0]
+        self.assertEqual(newest["subtitle"], "Single · 2026-09-01")
+        self.assertEqual(newest["url"], "https://open.spotify.com/album/NewestSingle")
+        self.assertEqual(newest["image"], "https://i.scdn.co/image/NewestSingle-300")
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_spotify_duplicates_and_unsafe_urls_are_skipped(self):
+        albums = [
+            album("Evil", "2026-09-01", url="javascript:alert(1)"),
+            album("Elsewhere", "2026-08-01", url="https://example.com/album"),
+            album("Same", "2026-07-01"),
+            album("Same", "2026-06-01"),
+            album("Bad Image", "2026-05-01", images=[{"url": "https://evil.example/x.jpg", "width": 300}]),
+        ]
+        with api(spotify_albums=albums):
+            items = creative_works.latest_albums()["items"]
+        self.assertEqual([i["title"] for i in items], ["Same", "Bad Image"])
+        self.assertEqual(items[1]["image"], "")
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_spotify_result_and_token_are_cached(self):
+        with api(spotify_albums=[album("One", "2026-01-01")]) as urlopen:
+            creative_works.latest_albums()
+            creative_works.latest_albums()
+            self.assertEqual(urlopen.call_count, 2)  # token + albums, then served from cache
+            cache.delete("creative_works:spotify:albums")
+            creative_works.latest_albums()
+            self.assertEqual(urlopen.call_count, 3)  # albums again, token reused
+
+    @override_settings(**SPOTIFY_KEYS, CREATIVE_WORKS_CACHE_SECONDS=123)
+    def test_success_uses_configured_cache_timeout(self):
+        with api(spotify_albums=[album("One", "2026-01-01")]), \
+                mock.patch.object(creative_works.cache, "set", wraps=creative_works.cache.set) as cache_set:
+            creative_works.latest_albums()
+        timeouts = {call.args[0]: call.args[2] for call in cache_set.call_args_list}
+        self.assertEqual(timeouts["creative_works:spotify:albums"], 123)
+
+    # Kyobo
+
+    def test_kyobo_books_are_listed_newest_first_without_network(self):
+        with mock.patch("pages.creative_works.urllib.request.urlopen") as urlopen:
+            books = creative_works.latest_books()
+        urlopen.assert_not_called()
+        self.assertFalse(books["is_fallback"])
+        self.assertEqual([(i["title"], i["subtitle"]) for i in books["items"]], [
+            ("래퍼의 노트", "eBook · 바른북스 · 2026-09-08"),
+            ("래퍼의 노트", "바른북스 · 2026-08-25"),
+        ])
+
+    def test_kyobo_links_and_covers_are_https_on_kyobo_hosts(self):
+        for item in creative_works.latest_books()["items"]:
+            with self.subTest(url=item["url"]):
+                for url in (item["url"], item["image"]):
+                    parts = urllib.parse.urlsplit(url)
+                    self.assertEqual(parts.scheme, "https")
+                    self.assertIn(parts.hostname, creative_works.KYOBO_HOSTS)
+        urls = [i["url"] for i in creative_works.latest_books()["items"]]
+        self.assertEqual(urls, [
+            "https://ebook-product.kyobobook.co.kr/dig/epd/ebook/E000013555457",
+            "https://product.kyobobook.co.kr/detail/S000220995923",
+        ])
+
+    def test_kyobo_author_url_uses_configured_id(self):
+        self.assertEqual(creative_works.kyobo_author_url(), KYOBO_AUTHOR_URL)
+        with override_settings(KYOBO_AUTHOR_ID="42"):
+            self.assertEqual(creative_works.kyobo_author_url(), "https://store.kyobobook.co.kr/person/detail/42")
+
+    def test_kyobo_list_is_capped_and_unsafe_entries_are_dropped(self):
+        extra = [
+            ("Book A", "", "Press", "2027-01-01", "https://product.kyobobook.co.kr/detail/S1", ""),
+            ("Book B", "", "Press", "2027-02-01", "https://product.kyobobook.co.kr/detail/S2", ""),
+            ("Evil", "", "Press", "2027-03-01", "javascript:alert(1)", ""),
+            ("Elsewhere", "", "Press", "2027-04-01", "https://example.com/book", ""),
+        ]
+        with mock.patch.object(creative_works, "KYOBO_BOOKS", creative_works.KYOBO_BOOKS + extra):
+            titles = [i["title"] for i in creative_works.latest_books()["items"]]
+        self.assertEqual(titles, ["Book B", "Book A", "래퍼의 노트"])
+
+    # Home page
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_home_shows_api_results(self):
+        with api(spotify_albums=[album("New <b>Album</b>", "2026-09-01")]):
+            response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            '<h3 id="creative-works-heading" class="card-title text-title">Creative Works</h3>',
+            html=True,
+        )
+        self.assertContains(response, "New &lt;b&gt;Album&lt;/b&gt;")
+        self.assertNotContains(response, "New <b>Album</b>")
+        self.assertContains(
+            response,
+            'target="_blank" rel="noopener noreferrer" aria-label="Listen on Spotify: New &lt;b&gt;Album&lt;/b&gt;">Listen on Spotify</a>',
+        )
+        self.assertContains(
+            response,
+            'class="button-primary creative-works-more" href="https://open.spotify.com/artist/5boerVEEWWSxs8H4B8iSm3"',
+        )
+
+    def test_home_books_link_to_kyobo(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, ">View on Kyobo</a>", count=2)
+        self.assertContains(
+            response,
+            f'href="{KYOBO_AUTHOR_URL}" target="_blank" rel="noopener noreferrer">View All on Kyobo</a>',
+        )
+        self.assertContains(response, 'href="https://product.kyobobook.co.kr/detail/S000220995923"')
+        self.assertContains(response, 'src="https://contents.kyobobook.co.kr/sih/fit-in/300x0/pdt/9791176214476.jpg"', count=2)
+        self.assertContains(response, 'class="creative-work-cover creative-work-cover-book"', count=2)
+        self.assertNotContains(response, "aladin")
+        self.assertNotContains(response, "Aladin")
+
+    def test_home_shows_fallback_without_credentials(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        for title in ["On The Start Line", "Enjoy Your Memory", "Daehan&#x27;s Daughters"]:
+            with self.subTest(title=title):
+                self.assertContains(response, title)
+        self.assertContains(response, ">Listen on Spotify</a>", count=3)
+        self.assertContains(response, 'class="creative-work-cover creative-work-cover-square"', count=3)
+        self.assertContains(response, 'onerror="this.remove()"', count=5)
+        self.assertContains(
+            response,
+            'href="https://open.spotify.com/artist/5boerVEEWWSxs8H4B8iSm3" target="_blank" rel="noopener noreferrer">View All on Spotify</a>',
+        )
+
+    def test_home_survives_a_broken_cache_backend(self):
+        with mock.patch.object(creative_works.cache, "get", side_effect=RuntimeError("cache down")):
+            response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "On The Start Line")
+        self.assertContains(response, "래퍼의 노트")

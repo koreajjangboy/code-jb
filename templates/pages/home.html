@@ -6,8 +6,7 @@
     <h1 class="text-metric mb-3">Code is how I build. Art is how I express.</h1>
 
     <p class="mb-0">
-        I build code-jb.dev as a space for creating, exploring ideas, and expressing them through technology and art.
-        I work with Python and Django, explore data analysis and AI, and turn ideas into real projects.
+        Where technology meets art, I build practical projects that give ideas a real shape.
     </p>
 
     <section id="about" class="home-about" aria-labelledby="about-heading">
@@ -22,18 +21,13 @@
                             I am JB Kim, a developer and artist.
                         </p>
                         <p class="card-text">
-                            I build web applications with Python and Django, work with data analysis and AI,
-                            and turn ideas into projects. I believe that ideas become meaningful
+                            I turn ideas into projects. I believe that ideas become meaningful
                             when they are made into something real.
                         </p>
                         <p class="card-text">
                             I want to think in my own words, create in my own way, and communicate through what I make.
                             code-jb.dev is a space where I document that process — what I think,
                             what I create, and how I express myself.
-                        </p>
-                        <p class="card-text">
-                            I work with Python, Django, data analysis, and AI/Automation,
-                            connecting technology and creativity through practical projects.
                         </p>
                     </div>
                 </div>
@@ -60,10 +54,28 @@
                 <div class="card h-100">
                     <div class="card-body">
                         <h3 class="card-title text-title">Current Focus</h3>
-                        <p class="card-text">
-                            I focus on Django web development, PostgreSQL, data analysis,
-                            AI agents, and automation.
-                        </p>
+                        <ul class="focus-list">
+                            <li class="focus-item">
+                                <p class="focus-title">Education for the AI Generation</p>
+                                <p class="focus-text">Helping the next generation grow with confidence in the age of AI.</p>
+                            </li>
+                            <li class="focus-item">
+                                <p class="focus-title">Emotional Steadiness</p>
+                                <p class="focus-text">Balancing everyday life and creative work to stay immersed for the long run.</p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="col-12" aria-labelledby="creative-works-heading">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 id="creative-works-heading" class="card-title text-title">Creative Works</h3>
+                        <div class="creative-works">
+                            {% include "pages/_creative_works_group.html" with heading="Music" shape="square" group=creative_works.albums action="Listen on Spotify" more_url=creative_works.spotify_artist_url more_label="View All on Spotify" empty_text="New music is coming soon." %}
+                            {% include "pages/_creative_works_group.html" with heading="Books" shape="book" group=creative_works.books action="View on Kyobo" more_url=creative_works.kyobo_author_url more_label="View All on Kyobo" empty_text="New books are coming soon." %}
+                        </div>
                     </div>
                 </div>
             </section>

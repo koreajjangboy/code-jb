@@ -1,0 +1,23 @@
+<div class="creative-works-group">
+    <h4 class="creative-works-heading">{{ heading }}</h4>
+    <ul class="creative-works-list">
+        {% for item in group.items %}
+        <li class="creative-work">
+            {# The placeholder box stays behind the image; a cover that fails to load is removed and the box shows. #}
+            <div class="creative-work-cover creative-work-cover-{{ shape }}">
+                {% if item.image %}
+                <img src="{{ item.image }}" alt="{{ item.title }} cover" width="72" height="{% if shape == 'book' %}104{% else %}72{% endif %}" loading="lazy" onerror="this.remove()">
+                {% endif %}
+            </div>
+            <div class="creative-work-body">
+                <p class="creative-work-title">{{ item.title }}</p>
+                {% if item.subtitle %}<p class="creative-work-meta">{{ item.subtitle }}</p>{% endif %}
+                <a class="button-secondary creative-work-action" href="{{ item.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ action }}: {{ item.title }}">{{ action }}</a>
+            </div>
+        </li>
+        {% empty %}
+        <li class="creative-work-empty">{{ empty_text }}</li>
+        {% endfor %}
+    </ul>
+    <a class="button-primary creative-works-more" href="{{ more_url }}" target="_blank" rel="noopener noreferrer">{{ more_label }}</a>
+</div>

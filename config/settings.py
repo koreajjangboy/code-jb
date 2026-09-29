@@ -161,3 +161,16 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # This project does not send email, so no mailer is configured.
 MAILERS = {}
+
+
+# Creative works on the home page (pages/creative_works.py).
+# Spotify credentials come from the environment; without them the home page shows fallback releases.
+# Books link to Kyobo (no public API): the list lives in pages/creative_works.py (KYOBO_BOOKS).
+
+SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID", "")
+SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET", "")
+SPOTIFY_ARTIST_ID = "5boerVEEWWSxs8H4B8iSm3"
+
+KYOBO_AUTHOR_ID = "1122019501"
+
+CREATIVE_WORKS_CACHE_SECONDS = 60 * 60 * 24

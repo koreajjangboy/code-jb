@@ -98,6 +98,132 @@
     scroll-margin-top: 24px;
 }
 
+/* Current Focus (home About): 제목 Text-medium, 설명 Text */
+.focus-list {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.focus-title {
+    margin: 0;
+    color: #374151;
+    font-weight: 500;
+}
+
+.focus-text {
+    margin: 0;
+}
+
+/* Creative Works (home About): Music · Books. Bootstrap 클래스에 의존하지 않음 */
+.creative-works {
+    display: grid;
+    gap: 24px;
+}
+
+@media (min-width: 768px) {
+    .creative-works {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.creative-works-heading {
+    margin: 0 0 16px;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+}
+
+.creative-works-list {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.creative-work {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* 표지 칸 = Card 플레이스홀더(점선 영역). 표지 이미지가 있으면 그 위를 덮고, 로드 실패 시 제거되어 칸이 보인다 */
+.creative-work-cover {
+    position: relative;
+    flex: none;
+    box-sizing: border-box;
+    width: 72px;
+    height: 72px;
+    border: 1px dashed #9CA3AF;
+    border-radius: 10px;
+    background: #F9FAFB;
+}
+
+.creative-work-cover-book {
+    height: 104px;
+}
+
+.creative-work-cover img {
+    position: absolute;
+    inset: -1px;
+    box-sizing: border-box;
+    width: calc(100% + 2px);
+    height: calc(100% + 2px);
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    background: #F9FAFB;
+    object-fit: cover;
+}
+
+.creative-work-body {
+    min-width: 0;
+}
+
+.creative-work-title {
+    margin: 0;
+    color: #374151;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.creative-work-meta {
+    margin: 0;
+    font-size: 12px;
+    line-height: normal;
+}
+
+.creative-work-action {
+    margin-top: 8px;
+}
+
+.creative-works-more {
+    margin-top: 24px;
+    text-decoration: none;
+}
+
+.creative-works-more:hover {
+    color: #FFFFFF;
+}
+
+/* 목록이 비었을 때: 안내(Tip) 박스 */
+.creative-work-empty {
+    padding: 8px 12px;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    background: #F9FAFB;
+}
+
+@media (max-width: 480px) {
+    .creative-works-more {
+        width: 100%;
+        height: 44px;
+    }
+}
+
 /* Card */
 .card {
     --bs-card-border-color: #E5E7EB;

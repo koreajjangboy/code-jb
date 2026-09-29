@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from .creative_works import creative_works
 from .forms import GuestbookEntryForm
 from .models import GuestbookEntry, Project
 
@@ -9,7 +10,7 @@ MAX_REPLY_INDENT = 3
 
 
 def home(request):
-    return render(request, "pages/home.html")
+    return render(request, "pages/home.html", {"creative_works": creative_works()})
 
 
 def about(request):
