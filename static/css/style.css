@@ -92,6 +92,12 @@
     line-height: 28px;
 }
 
+/* Home: 메인 메시지와 About 섹션 사이 48px (페이지 상·하단 여백과 같은 값) */
+.home-about {
+    margin-top: 48px;
+    scroll-margin-top: 24px;
+}
+
 /* Card */
 .card {
     --bs-card-border-color: #E5E7EB;

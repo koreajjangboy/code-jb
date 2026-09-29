@@ -9,7 +9,6 @@ class PageViewTests(TestCase):
     def test_pages_render_with_expected_template(self):
         pages = [
             ("home", "/", "pages/home.html"),
-            ("about", "/about/", "pages/about.html"),
             ("projects", "/projects/", "pages/projects.html"),
             ("guestbook", "/guestbook/", "pages/guestbook.html"),
         ]
@@ -29,10 +28,10 @@ class PageViewTests(TestCase):
         self.assertContains(response, 'rel="noopener noreferrer"')
 
     def test_navbar_marks_only_current_page_active(self):
-        for current in ["home", "about", "projects", "guestbook"]:
+        for current in ["projects", "guestbook"]:
             with self.subTest(current=current):
                 response = self.client.get(reverse(current))
-                for name in ["home", "about", "projects", "guestbook"]:
+                for name in ["projects", "guestbook"]:
                     link = f'href="{reverse(name)}"'
                     active_link = f'class="nav-link active" {link} aria-current="page"'
                     if name == current:
@@ -40,6 +39,40 @@ class PageViewTests(TestCase):
                     else:
                         self.assertNotContains(response, active_link)
                 self.assertContains(response, 'aria-current="page"', count=1)
+
+    def test_navbar_has_brand_and_no_home_or_about_links(self):
+        for path in ["/", "/projects/", "/guestbook/"]:
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertContains(response, '<a class="navbar-brand" href="/"', count=1)
+                self.assertContains(response, ">code-jb.dev</a>")
+                self.assertNotContains(response, ">JB Kim</a>")
+                self.assertEqual(
+                    [link.split(">")[-1] for link in response.content.decode().split("</a>") if 'class="nav-link' in link],
+                    ["Projects", "Guestbook"],
+                )
+                self.assertNotContains(response, 'href="/about/"')
+
+    def test_brand_is_current_page_on_home(self):
+        response = self.client.get("/")
+        self.assertContains(response, '<a class="navbar-brand" href="/" aria-current="page">code-jb.dev</a>', count=1)
+        self.assertContains(response, 'aria-current="page"', count=1)
+
+    def test_home_includes_about_section(self):
+        response = self.client.get("/")
+        self.assertContains(response, '<h1 class="text-metric mb-3">Code is how I build. Art is how I express.</h1>', html=True)
+        self.assertContains(response, 'id="about"')
+        self.assertContains(response, '<h2 id="about-heading" class="text-title mb-3">About Me</h2>', html=True)
+        for text in ["I am JB Kim, a developer and artist.", "Skills", "Current Focus", "<li>PostgreSQL</li>",
+                     "I want to think in my own words"]:
+            with self.subTest(text=text):
+                self.assertContains(response, text)
+        self.assertContains(response, "Code is how I build. Art is how I express.", count=1)
+
+    def test_about_url_redirects_to_home_section(self):
+        self.assertEqual(reverse("about"), "/about/")
+        response = self.client.get("/about/")
+        self.assertRedirects(response, "/#about", status_code=301)
 
 
 class ProjectModelTests(TestCase):

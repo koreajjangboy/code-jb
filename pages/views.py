@@ -13,7 +13,8 @@ def home(request):
 
 
 def about(request):
-    return render(request, "pages/about.html")
+    # About now lives on the home page; keep old /about/ links working.
+    return redirect(f"{reverse('home')}#about", permanent=True)
 
 
 def projects(request):

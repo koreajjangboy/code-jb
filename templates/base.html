@@ -18,15 +18,13 @@
     <header class="site-header">
         <nav class="navbar navbar-expand">
             <div class="container">
-                <a class="navbar-brand" href="{% url 'home' %}">JB Kim</a>
+                {% with url_name=request.resolver_match.url_name %}
+                <a class="navbar-brand" href="{% url 'home' %}"{% if url_name == 'home' %} aria-current="page"{% endif %}>code-jb.dev</a>
                 <div class="navbar-nav ms-auto">
-                    {% with url_name=request.resolver_match.url_name %}
-                    <a class="nav-link{% if url_name == 'home' %} active{% endif %}" href="{% url 'home' %}"{% if url_name == 'home' %} aria-current="page"{% endif %}>Home</a>
-                    <a class="nav-link{% if url_name == 'about' %} active{% endif %}" href="{% url 'about' %}"{% if url_name == 'about' %} aria-current="page"{% endif %}>About</a>
                     <a class="nav-link{% if url_name == 'projects' %} active{% endif %}" href="{% url 'projects' %}"{% if url_name == 'projects' %} aria-current="page"{% endif %}>Projects</a>
                     <a class="nav-link{% if url_name == 'guestbook' or url_name == 'guestbook_reply' %} active{% endif %}" href="{% url 'guestbook' %}"{% if url_name == 'guestbook' or url_name == 'guestbook_reply' %} aria-current="page"{% endif %}>Guestbook</a>
-                    {% endwith %}
                 </div>
+                {% endwith %}
             </div>
         </nav>
     </header>
