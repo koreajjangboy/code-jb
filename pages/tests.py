@@ -49,7 +49,8 @@ class PageViewTests(TestCase):
             with self.subTest(path=path):
                 response = self.client.get(path)
                 self.assertContains(response, '<a class="navbar-brand" href="/"', count=1)
-                self.assertContains(response, ">code-jb.dev</a>")
+                self.assertContains(response, '<img class="navbar-logo" src="/static/images/logo.png" alt="code-jb.dev" width="144" height="28"></a>', count=1)
+                self.assertNotContains(response, ">code-jb.dev</a>")
                 self.assertNotContains(response, ">JB Kim</a>")
                 self.assertEqual(
                     [link.split(">")[-1] for link in response.content.decode().split("</a>") if 'class="nav-link' in link],
@@ -59,7 +60,7 @@ class PageViewTests(TestCase):
 
     def test_brand_is_current_page_on_home(self):
         response = self.client.get("/")
-        self.assertContains(response, '<a class="navbar-brand" href="/" aria-current="page">code-jb.dev</a>', count=1)
+        self.assertContains(response, '<a class="navbar-brand" href="/" aria-current="page"><img class="navbar-logo" src="/static/images/logo.png" alt="code-jb.dev" width="144" height="28"></a>', count=1)
         self.assertContains(response, 'aria-current="page"', count=1)
 
     def test_home_includes_about_section(self):
