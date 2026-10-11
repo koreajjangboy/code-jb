@@ -151,6 +151,18 @@ class ProjectModelTests(TestCase):
                     "display_order": 2,
                     "is_published": True,
                 },
+                {
+                    "name": "Advertisement-Video-Generator",
+                    "description": (
+                        "Advertisement-Video-Generator automatically creates 9:16 short-form ad videos, "
+                        "from Gemini-written scripts and TTS narration to Luma scene clips and FFmpeg rendering."
+                    ),
+                    "technologies": "Python, FastAPI, PostgreSQL, Gemini API, Luma API, FFmpeg",
+                    "project_url": "",
+                    "github_url": "https://github.com/koreajjangboy/Advertisement-Video-Generator",
+                    "display_order": 3,
+                    "is_published": True,
+                },
             ],
         )
 
@@ -171,17 +183,19 @@ class ProjectsPageTests(TestCase):
 
     def test_published_projects_are_rendered(self):
         response = self.get_projects_page()
-        self.assertContains(response, '<article class="col-12 col-md-6">', count=2)
+        self.assertContains(response, '<article class="col-12 col-md-6">', count=3)
         self.assertContains(
             response,
             "SNS-Assistant generates SNS posts and hashtags from images and keywords using the Gemini API.",
         )
         self.assertContains(response, "Python · Django · Bootstrap")
         self.assertContains(response, "Python · Streamlit · Gemini API · Pillow")
+        self.assertContains(response, "Python · FastAPI · PostgreSQL · Gemini API · Luma API · FFmpeg")
 
     def test_projects_are_rendered_in_display_order(self):
         content = self.get_projects_page().content.decode()
         self.assertLess(content.index(">code-jb.dev</h2>"), content.index(">SNS-Assistant</h2>"))
+        self.assertLess(content.index(">SNS-Assistant</h2>"), content.index(">Advertisement-Video-Generator</h2>"))
 
     def test_display_order_controls_rendering_order(self):
         Project.objects.filter(name="code-jb.dev").update(display_order=3)
@@ -198,11 +212,11 @@ class ProjectsPageTests(TestCase):
         response = self.get_projects_page()
         self.assertNotContains(response, "Hidden Project")
         self.assertNotContains(response, "https://hidden.example.com")
-        self.assertContains(response, '<article class="col-12 col-md-6">', count=2)
+        self.assertContains(response, '<article class="col-12 col-md-6">', count=3)
 
     def test_project_titles_are_not_links(self):
         response = self.get_projects_page()
-        for name in ["code-jb.dev", "SNS-Assistant"]:
+        for name in ["code-jb.dev", "SNS-Assistant", "Advertisement-Video-Generator"]:
             with self.subTest(name=name):
                 self.assertContains(
                     response,
@@ -217,6 +231,7 @@ class ProjectsPageTests(TestCase):
         for url in [
             "https://github.com/koreajjangboy/code-jb",
             "https://github.com/koreajjangboy/SNS-Assistant",
+            "https://github.com/koreajjangboy/Advertisement-Video-Generator",
         ]:
             with self.subTest(url=url):
                 self.assertContains(
@@ -229,7 +244,7 @@ class ProjectsPageTests(TestCase):
         Project.objects.create(
             name="Plain Project",
             description="A project without links.",
-            display_order=3,
+            display_order=4,
         )
         response = self.get_projects_page()
         self.assertContains(
@@ -237,8 +252,8 @@ class ProjectsPageTests(TestCase):
             '<h2 class="card-title text-title">Plain Project</h2>',
             html=True,
         )
-        self.assertContains(response, "View on GitHub", count=2)
-        self.assertContains(response, 'target="_blank"', count=2)
+        self.assertContains(response, "View on GitHub", count=3)
+        self.assertContains(response, 'target="_blank"', count=3)
 
 
 class GuestbookTests(TestCase):
